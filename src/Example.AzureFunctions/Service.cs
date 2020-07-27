@@ -23,7 +23,7 @@ namespace Memstate.Examples.AzureFunctions
         
         // service start errors is only ever non null if there were errors during startup where we don't have access to a logger.
         private static ConcurrentBag<string> _serviceStartErrors = null;
-        public static Engine<LoyaltyDB> Model
+        public static Engine<LoyaltyDB> Engine
         {
             get
             {
