@@ -8,6 +8,9 @@
 .vs
 .vscode
 
+# azure function deployment details
+[Pp]roperties/
+
 # cake
 tools/*
 !tools/packages.config
