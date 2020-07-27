@@ -35,7 +35,7 @@ namespace Memstate.Examples.AzureFunctions
                         Action<string> Info = text => startLog.Add(text);
                         if (_running) return _engine;
                         var connection = GetConnect();
-                        _engine =  TableStorageMemstateProvider.StartEngine(true, Info).GetAwaiter().GetResult();
+                        _engine =  TableStorageMemstateProvider.StartEngine<LoyaltyDB>(connection, Info, "memstateAFLoyaltyDemo", "instance1").GetAwaiter().GetResult();
                         _running = true;
                     }
                     catch(Exception ex)
