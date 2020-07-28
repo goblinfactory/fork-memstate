@@ -17,21 +17,21 @@ namespace Memstate.Examples.AzureFunctions
     public static class CustomersService
     {
         [FunctionName("customers-get-all")]
-        public static async Task<IActionResult> CustomersGetAll([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> CustomersGetAll([HttpTrigger(AuthorizationLevel.Function, "GET", Route = "customers")] HttpRequest req, ILogger log)
         {
             var customers = await Service.Engine.Execute(log, new GetCustomers());
             return new JsonResult(customers);
         }
 
         [FunctionName("customers-top-10")]
-        public static async Task<IActionResult> CustomersTop10([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> CustomersTop10([HttpTrigger(AuthorizationLevel.Function, "GET", Route = "customers/top-10")] HttpRequest req, ILogger log)
         {
             var customers = await Service.Engine.Execute(log, new Top10Customers());
             return new JsonResult(customers);
         }
 
         [FunctionName("customer-earn-points")]
-        public static async Task<IActionResult> CustomerEarnPoints([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> CustomerEarnPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-earned")] HttpRequest req, ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             EarnPoints earnPointsCmd = JsonConvert.DeserializeObject<EarnPoints>(requestBody);
@@ -40,7 +40,7 @@ namespace Memstate.Examples.AzureFunctions
         }
 
         [FunctionName("customer-init")]
-        public static async Task<IActionResult> Init([HttpTrigger(AuthorizationLevel.Function, "put", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> Init([HttpTrigger(AuthorizationLevel.Function, "PUT", Route = "customers/{id}")] HttpRequest req, ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             InitCustomer initCustomer = JsonConvert.DeserializeObject<InitCustomer>(requestBody);
@@ -49,7 +49,7 @@ namespace Memstate.Examples.AzureFunctions
         }
 
         [FunctionName("customer-spend-points")]
-        public static async Task<IActionResult> SpendPoints([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> SpendPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-spent")] HttpRequest req, ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             SpendPoints points = JsonConvert.DeserializeObject<SpendPoints>(requestBody);
@@ -58,7 +58,7 @@ namespace Memstate.Examples.AzureFunctions
         }
 
         [FunctionName("customer-transfer-points1")]
-        public static async Task<IActionResult> TransferPoints1([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> TransferPoints1([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-transferred1")] HttpRequest req, ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TransferPoints points = JsonConvert.DeserializeObject<TransferPoints>(requestBody);
@@ -68,8 +68,9 @@ namespace Memstate.Examples.AzureFunctions
         }
 
         [FunctionName("customer-transfer-points2")]
-        public static async Task<IActionResult> TransferPoints2([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> TransferPoints2([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-tranferred2")] HttpRequest req, ILogger log)
         {
+            // will automatically map the ID to the ID field. (not yet implemented)
             return new OkObjectResult(await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log));
         }
 
