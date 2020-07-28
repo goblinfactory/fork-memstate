@@ -16,22 +16,22 @@ namespace Memstate.Examples.AzureFunctions
 {
     public static class CustomersService
     {
-        [FunctionName("customers")]
-        public static async Task<IActionResult> Customers([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req, ILogger log)
+        [FunctionName("customers-get-all")]
+        public static async Task<IActionResult> CustomersGetAll([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req, ILogger log)
         {
             var customers = await Service.Engine.Execute(log, new GetCustomers());
             return new JsonResult(customers);
         }
 
-        [FunctionName("customers/top10")]
+        [FunctionName("customers-top-10")]
         public static async Task<IActionResult> CustomersTop10([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req, ILogger log)
         {
             var customers = await Service.Engine.Execute(log, new Top10Customers());
             return new JsonResult(customers);
         }
 
-        [FunctionName("customers/{id}")]
-        public static async Task<IActionResult> EarnPoints([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        [FunctionName("customer-earn-points")]
+        public static async Task<IActionResult> CustomerEarnPoints([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             EarnPoints earnPointsCmd = JsonConvert.DeserializeObject<EarnPoints>(requestBody);
@@ -39,8 +39,8 @@ namespace Memstate.Examples.AzureFunctions
             return new OkObjectResult(customer);
         }
 
-        [FunctionName("customers/{id}")]
-        public static async Task<IActionResult> InitCustomer([HttpTrigger(AuthorizationLevel.Function, "put", Route = null)] HttpRequest req, ILogger log)
+        [FunctionName("customer-init")]
+        public static async Task<IActionResult> Init([HttpTrigger(AuthorizationLevel.Function, "put", Route = null)] HttpRequest req, ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             InitCustomer initCustomer = JsonConvert.DeserializeObject<InitCustomer>(requestBody);
@@ -48,7 +48,7 @@ namespace Memstate.Examples.AzureFunctions
             return new OkObjectResult(customer);
         }
 
-        [FunctionName("customers/{id}")]
+        [FunctionName("customer-spend-points")]
         public static async Task<IActionResult> SpendPoints([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -57,15 +57,27 @@ namespace Memstate.Examples.AzureFunctions
             return new OkObjectResult(customer);
         }
 
-        [FunctionName("customers/{id}")]
-        public static async Task<IActionResult> TransferPoints([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        [FunctionName("customer-transfer-points1")]
+        public static async Task<IActionResult> TransferPoints1([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             TransferPoints points = JsonConvert.DeserializeObject<TransferPoints>(requestBody);
-            // this is atomic! Debit and Credit gauranteed Atomic! wooot! take that MongoDB!
             TransferPointsResult transactionResult = await Service.Engine.Execute(log, points);
+            //this is atomic!Debit and Credit gauranteed Atomic!wooot! take that MongoDB!
             return new OkObjectResult(transactionResult);
+        }
+
+        [FunctionName("customer-transfer-points2")]
+        public static async Task<IActionResult> TransferPoints2([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        {
+            return new OkObjectResult(await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log));
         }
 
     }
 }
+
+// learning references 
+// -------------------
+// Azure functions REST and function routes
+// https://docs.microsoft.com/en-us/learn/modules/build-api-azure-functions/5-rest-function-routes
+
