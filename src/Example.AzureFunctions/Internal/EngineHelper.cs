@@ -36,5 +36,29 @@ namespace Memstate.Examples.AzureFunctions
             return new OkObjectResult(result);
         }
 
+        public static void EnsureIDMatches(this string idField, string id, Microsoft.Extensions.Logging.ILogger log)
+        {
+            if (string.IsNullOrWhiteSpace(idField)) throw new ArgumentNullException(nameof(idField),"id cannot be empty");
+            if (string.IsNullOrWhiteSpace(id)) throw new ArgumentNullException(nameof(id), "id cannot be empty");
+            if(!String.Equals(idField, id))
+            {
+                var msg = $"id's do not match [{idField}] !== [{id}]";
+                log.LogError(msg);
+                throw new InvalidOperationException(msg);
+            }
+        }
+
+        public static void EnsureIDMatches(this int idField, int id, Microsoft.Extensions.Logging.ILogger log)
+        {
+            if (idField==0) throw new ArgumentNullException(nameof(idField), "id cannot be zero.");
+            if (id == 0) throw new ArgumentNullException(nameof(id), "id cannot be zero.");
+            if (idField != id)
+            {
+                var msg = $"id's do not match [{idField}] !== [{id}]";
+                log.LogError(msg);
+                throw new InvalidOperationException(msg);
+            }
+        }
+
     }
 }

@@ -40,10 +40,11 @@ namespace Memstate.Examples.AzureFunctions
         }
 
         [FunctionName("customer-init")]
-        public static async Task<IActionResult> Init([HttpTrigger(AuthorizationLevel.Function, "PUT", Route = "customers/{id}")] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> Init([HttpTrigger(AuthorizationLevel.Function, "PUT", Route = "customers/{id}")] HttpRequest req, ILogger log, int id)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             InitCustomer initCustomer = JsonConvert.DeserializeObject<InitCustomer>(requestBody);
+            initCustomer.CustomerId.EnsureIDMatches(id, log);
             Customer customer = await Service.Engine.Execute(log, initCustomer);
             return new OkObjectResult(customer);
         }
@@ -82,3 +83,16 @@ namespace Memstate.Examples.AzureFunctions
 // Azure functions REST and function routes
 // https://docs.microsoft.com/en-us/learn/modules/build-api-azure-functions/5-rest-function-routes
 
+// Azure Table Storage disallowed characters
+// todo: add to Goblinfactory.Azure.TableStorage
+// https://microsoft.github.io/AzureTipsAndTricks/blog/tip87.html
+
+// azure function filters
+// https://github.com/Azure/azure-webjobs-sdk/wiki/Function-Filters
+// be careful of memory leaks! a million requests can cause a serious leak.
+
+// aspnetcore 3.1 filters
+// https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/filters?view=aspnetcore-3.1
+
+// exception filters
+/ / https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/filters?view=aspnetcore-3.1#exception-filters
