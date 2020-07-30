@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using System.IO;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc;
+using System.Web.Http;
 
 namespace Memstate.Examples.AzureFunctions
 {
@@ -26,14 +27,55 @@ namespace Memstate.Examples.AzureFunctions
             return engine.Execute(command);
         }
 
-        public static async Task<IActionResult> ExecuteCommand<TCommand, TModel, TResult>(this Engine<TModel> engine, HttpRequest req, Microsoft.Extensions.Logging.ILogger log) 
-            where TModel : class 
-            where TCommand : Command<TModel, TResult> 
+        public static async Task<IActionResult> ExecuteCommand<TCommand, TModel, TResult>(this Engine<TModel> engine, HttpRequest req, Microsoft.Extensions.Logging.ILogger log, int id, Func<TCommand, TCommand> handler)
+where TModel : class
+where TCommand : Command<TModel, TResult>
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            TCommand cmd = JsonConvert.DeserializeObject<TCommand>(requestBody);
-            TResult result = await engine.Execute(cmd);
-            return new OkObjectResult(result);
+            try
+            {
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                TCommand cmd = JsonConvert.DeserializeObject<TCommand>(requestBody);
+                TResult result = await engine.Execute(cmd);
+                return new OkObjectResult(result);
+            }
+            catch (ApplicationException ae)
+            {
+                return new BadRequestObjectResult(ae);
+            }
+        }
+
+        public static async Task<IActionResult> ExecuteCommand<TCommand, TModel, TResult>(this Engine<TModel> engine, HttpRequest req, string id, Microsoft.Extensions.Logging.ILogger log)
+    where TModel : class
+    where TCommand : Command<TModel, TResult>
+        {
+            try
+            {
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                TCommand cmd = JsonConvert.DeserializeObject<TCommand>(requestBody);
+                TResult result = await engine.Execute(cmd);
+                return new OkObjectResult(result);
+            }
+            catch (ApplicationException ae)
+            {
+                return new BadRequestObjectResult(ae);
+            }
+        }
+
+        public static async Task<IActionResult> ExecuteCommand<TCommand, TModel, TResult>(this Engine<TModel> engine, HttpRequest req, Microsoft.Extensions.Logging.ILogger log) 
+            where TModel : class
+            where TCommand : Command<TModel, TResult>
+        {
+            try
+            {
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                TCommand cmd = JsonConvert.DeserializeObject<TCommand>(requestBody);
+                TResult result = await engine.Execute(cmd);
+                return new OkObjectResult(result);
+            }
+            catch(ApplicationException ae)
+            {
+                return new BadRequestObjectResult(ae);
+            }
         }
 
         public static void EnsureIDMatches(this string idField, string id, Microsoft.Extensions.Logging.ILogger log)
@@ -48,7 +90,7 @@ namespace Memstate.Examples.AzureFunctions
             }
         }
 
-        public static void EnsureIDMatches(this int idField, int id, Microsoft.Extensions.Logging.ILogger log)
+        public static int EnsureIDMatches(this int idField, int id, Microsoft.Extensions.Logging.ILogger log)
         {
             if (idField==0) throw new ArgumentNullException(nameof(idField), "id cannot be zero.");
             if (id == 0) throw new ArgumentNullException(nameof(id), "id cannot be zero.");
@@ -58,7 +100,7 @@ namespace Memstate.Examples.AzureFunctions
                 log.LogError(msg);
                 throw new InvalidOperationException(msg);
             }
+            return idField;
         }
-
     }
 }

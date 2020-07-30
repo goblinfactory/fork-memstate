@@ -50,29 +50,23 @@ namespace Memstate.Examples.AzureFunctions
         }
 
         [FunctionName("customer-spend-points")]
-        public static async Task<IActionResult> SpendPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-spent")] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> SpendPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-spent")] 
+            HttpRequest req, ILogger log, int id)
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            SpendPoints points = JsonConvert.DeserializeObject<SpendPoints>(requestBody);
-            Customer customer = await Service.Engine.Execute(log, points);
-            return new OkObjectResult(customer);
+            return await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log, id);
         }
 
-        [FunctionName("customer-transfer-points1")]
-        public static async Task<IActionResult> TransferPoints1([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-transferred1")] HttpRequest req, ILogger log)
-        {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            TransferPoints points = JsonConvert.DeserializeObject<TransferPoints>(requestBody);
-            TransferPointsResult transactionResult = await Service.Engine.Execute(log, points);
-            //this is atomic!Debit and Credit gauranteed Atomic!wooot! take that MongoDB!
-            return new OkObjectResult(transactionResult);
-        }
 
-        [FunctionName("customer-transfer-points2")]
-        public static async Task<IActionResult> TransferPoints2([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-tranferred2")] HttpRequest req, ILogger log)
+        //this is atomic!Debit and Credit gauranteed Atomic!wooot! take that MongoDB!
+        [FunctionName("customer-transfer-points")] 
+        public static async Task<IActionResult> TransferPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-tranferred2")] 
+        HttpRequest req, ILogger log, int id)
         {
-            // will automatically map the ID to the ID field. (not yet implemented)
-            return new OkObjectResult(await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log));
+            return await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log, (tp)=> {
+                // processing filter allows for modifying, logging, validating
+                tp.SenderId.EnsureIDMatches(id, log);
+                return tp;
+            });
         }
 
     }
