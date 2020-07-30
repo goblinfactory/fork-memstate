@@ -42,18 +42,14 @@ namespace Memstate.Examples.AzureFunctions
         [FunctionName("customer-init")]
         public static async Task<IActionResult> Init([HttpTrigger(AuthorizationLevel.Function, "PUT", Route = "customers/{id}")] HttpRequest req, ILogger log, int id)
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            InitCustomer initCustomer = JsonConvert.DeserializeObject<InitCustomer>(requestBody);
-            initCustomer.CustomerId.EnsureIDMatches(id, log);
-            Customer customer = await Service.Engine.Execute(log, initCustomer);
-            return new OkObjectResult(customer);
+            return await Service.Engine.ExecuteCommand<InitCustomer, LoyaltyDB, Customer>(req, log, cmd => cmd.CustomerId.EnsureIDMatches(id));
         }
 
         [FunctionName("customer-spend-points")]
         public static async Task<IActionResult> SpendPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-spent")] 
             HttpRequest req, ILogger log, int id)
         {
-            return await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log, id);
+            return await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log, cmd =>cmd.SenderId.EnsureIDMatches(id));
         }
 
 
@@ -62,11 +58,7 @@ namespace Memstate.Examples.AzureFunctions
         public static async Task<IActionResult> TransferPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-tranferred2")] 
         HttpRequest req, ILogger log, int id)
         {
-            return await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log, (tp)=> {
-                // processing filter allows for modifying, logging, validating
-                tp.SenderId.EnsureIDMatches(id, log);
-                return tp;
-            });
+            return await Service.Engine.ExecuteCommand<TransferPoints, LoyaltyDB, TransferPointsResult>(req, log, cmd => cmd.SenderId.EnsureIDMatches(id, log));
         }
 
     }

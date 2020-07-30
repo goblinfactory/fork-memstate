@@ -27,7 +27,7 @@ namespace Memstate.Examples.AzureFunctions
             return engine.Execute(command);
         }
 
-        public static async Task<IActionResult> ExecuteCommand<TCommand, TModel, TResult>(this Engine<TModel> engine, HttpRequest req, Microsoft.Extensions.Logging.ILogger log, int id, Func<TCommand, TCommand> handler)
+        public static async Task<IActionResult> ExecuteCommand<TCommand, TModel, TResult>(this Engine<TModel> engine, HttpRequest req, Microsoft.Extensions.Logging.ILogger log, int id)
 where TModel : class
 where TCommand : Command<TModel, TResult>
         {
@@ -35,6 +35,23 @@ where TCommand : Command<TModel, TResult>
             {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 TCommand cmd = JsonConvert.DeserializeObject<TCommand>(requestBody);
+                TResult result = await engine.Execute(cmd);
+                return new OkObjectResult(result);
+            }
+            catch (ApplicationException ae)
+            {
+                return new BadRequestObjectResult(ae);
+            }
+        }
+
+        public static async Task<IActionResult> ExecuteCommand<TCommand, TModel, TResult>(this Engine<TModel> engine, HttpRequest req, Microsoft.Extensions.Logging.ILogger log, Func<TCommand, TCommand> handler)
+where TModel : class
+where TCommand : Command<TModel, TResult>
+        {
+            try
+            {
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                TCommand cmd = handler(JsonConvert.DeserializeObject<TCommand>(requestBody));
                 TResult result = await engine.Execute(cmd);
                 return new OkObjectResult(result);
             }
