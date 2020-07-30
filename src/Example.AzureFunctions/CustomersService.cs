@@ -31,12 +31,9 @@ namespace Memstate.Examples.AzureFunctions
         }
 
         [FunctionName("customer-earn-points")]
-        public static async Task<IActionResult> CustomerEarnPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-earned")] HttpRequest req, ILogger log)
+        public static async Task<IActionResult> CustomerEarnPoints([HttpTrigger(AuthorizationLevel.Function, "POST", Route = "customers/{id}/points-earned")] HttpRequest req, ILogger log, int id)
         {
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            EarnPoints earnPointsCmd = JsonConvert.DeserializeObject<EarnPoints>(requestBody);
-            Customer customer = await Service.Engine.Execute(log, earnPointsCmd);
-            return new OkObjectResult(customer);
+            return await Service.Engine.ExecuteCommand<EarnPoints, LoyaltyDB, Customer>(req, log, cmd => cmd.CustomerId.EnsureIDMatches(id));
         }
 
         [FunctionName("customer-init")]
